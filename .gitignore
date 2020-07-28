@@ -1,6 +1,8 @@
 .idea
+/coverage
 /vendor/
 /composer.lock
 /build
+/log
 /phpstan.phar
 /phpunit.xml

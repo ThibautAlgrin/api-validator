@@ -2,12 +2,18 @@
 
 namespace ElevenLabs\Api\Decoder;
 
+/**
+ * Interface DecoderInterface.
+ */
 interface DecoderInterface
 {
     /**
      * Decode a string into an object or array of objects.
      *
-     * @return object|object[]
+     * @param string $data
+     * @param string $format
+     *
+     * @return \stdClass|\stdClass[]
      */
     public function decode(string $data, string $format);
 }

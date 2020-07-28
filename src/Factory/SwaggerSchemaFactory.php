@@ -1,4 +1,5 @@
-<?php
+<?php declare(strict_types=1);
+
 namespace ElevenLabs\Api\Factory;
 
 use ElevenLabs\Api\Definition\RequestDefinition;
@@ -14,10 +15,15 @@ use JsonSchema\Uri\UriRetriever;
 use Symfony\Component\Yaml\Yaml;
 
 /**
- * Create a schema definition from a Swagger file
+ * Class SwaggerSchemaFactory.
  */
-class SwaggerSchemaFactory implements SchemaFactory
+class SwaggerSchemaFactory implements SchemaFactoryInterface
 {
+    /**
+     * @param string $schemaFile (must start with a scheme: file://, http://, https://, etc...)
+     *
+     * @return Schema
+     */
     public function createSchema(string $schemaFile): Schema
     {
         $schema = $this->resolveSchemaFile($schemaFile);
@@ -30,7 +36,12 @@ class SwaggerSchemaFactory implements SchemaFactory
         );
     }
 
-    protected function resolveSchemaFile($schemaFile): object
+    /**
+     * @param string $schemaFile
+     *
+     * @return \stdClass
+     */
+    private function resolveSchemaFile(string $schemaFile): \stdClass
     {
         $extension = pathinfo($schemaFile, PATHINFO_EXTENSION);
         switch ($extension) {
@@ -73,6 +84,10 @@ class SwaggerSchemaFactory implements SchemaFactory
         return $schema;
     }
 
+    /**
+     * @param mixed         $schema
+     * @param SchemaStorage $schemaStorage
+     */
     private function expandSchemaReferences(&$schema, SchemaStorage $schemaStorage): void
     {
         foreach ($schema as &$member) {
@@ -85,7 +100,12 @@ class SwaggerSchemaFactory implements SchemaFactory
         }
     }
 
-    protected function createRequestDefinitions(object $schema): RequestDefinitions
+    /**
+     * @param \stdClass $schema
+     *
+     * @return RequestDefinitions
+     */
+    private function createRequestDefinitions(\stdClass $schema): RequestDefinitions
     {
         $definitions = [];
         $defaultConsumedContentTypes = [];
@@ -149,7 +169,7 @@ class SwaggerSchemaFactory implements SchemaFactory
                 $responseDefinitions = [];
                 foreach ($definition->responses as $statusCode => $response) {
                     $responseDefinitions[] = $this->createResponseDefinition(
-                        $statusCode,
+                        'default' === $statusCode ? $statusCode : (int) $statusCode,
                         $responseContentTypes,
                         $response
                     );
@@ -158,7 +178,7 @@ class SwaggerSchemaFactory implements SchemaFactory
                 $definitions[] = new RequestDefinition(
                     $method,
                     $definition->operationId,
-                    $basePath.$pathTemplate,
+                    '/' === $basePath ? $pathTemplate : $basePath.$pathTemplate,
                     new Parameters($requestParameters),
                     $contentTypes,
                     $responseDefinitions
@@ -169,14 +189,15 @@ class SwaggerSchemaFactory implements SchemaFactory
         return new RequestDefinitions($definitions);
     }
 
-    private function containsBodyParametersLocations(object $definition): bool
+    /**
+     * @param \stdClass $definition
+     *
+     * @return bool
+     */
+    private function containsBodyParametersLocations(\stdClass $definition): bool
     {
-        if (!isset($definition->parameters)) {
-            return false;
-        }
-
-        foreach ($definition->parameters as $parameter) {
-            if (isset($parameter->in) && \in_array($parameter->in, Parameter::BODY_LOCATIONS, true)) {
+        foreach ($definition->parameters ?? [] as $parameter) {
+            if (\in_array($parameter->in ?? null, Parameter::BODY_LOCATIONS, true)) {
                 return true;
             }
         }
@@ -185,9 +206,12 @@ class SwaggerSchemaFactory implements SchemaFactory
     }
 
     /**
+     * @param \stdClass $definition
+     * @param string    $pathTemplate
+     *
      * @return string[]
      */
-    private function guessSupportedContentTypes(object $definition, string $pathTemplate): array
+    private function guessSupportedContentTypes(\stdClass $definition, string $pathTemplate): array
     {
         if (!isset($definition->parameters)) {
             return [];
@@ -210,7 +234,7 @@ class SwaggerSchemaFactory implements SchemaFactory
             );
         }
 
-        if (count($bodyLocations) === 1) {
+        if (1 === \count($bodyLocations)) {
             return [Parameter::BODY_LOCATIONS_TYPES[current($bodyLocations)]];
         }
 
@@ -218,10 +242,13 @@ class SwaggerSchemaFactory implements SchemaFactory
     }
 
     /**
-     * @param string|int $statusCode
-     * @param string[] $allowedContentTypes
+     * @param int|string $statusCode
+     * @param string[]   $allowedContentTypes
+     * @param \stdClass  $response
+     *
+     * @return ResponseDefinition
      */
-    protected function createResponseDefinition($statusCode, array $allowedContentTypes, object $response): ResponseDefinition
+    private function createResponseDefinition($statusCode, array $allowedContentTypes, \stdClass $response): ResponseDefinition
     {
         $parameters = [];
         if (isset($response->schema)) {
@@ -229,7 +256,7 @@ class SwaggerSchemaFactory implements SchemaFactory
                 'in' => 'body',
                 'name' => 'body',
                 'required' => true,
-                'schema' => $response->schema
+                'schema' => $response->schema,
             ]);
         }
 
@@ -245,18 +272,20 @@ class SwaggerSchemaFactory implements SchemaFactory
         return new ResponseDefinition($statusCode, $allowedContentTypes, new Parameters($parameters));
     }
 
-    protected function createParameter(object $parameter): Parameter
+    /**
+     * @param \stdClass $parameter
+     *
+     * @return Parameter
+     */
+    private function createParameter(\stdClass $parameter): Parameter
     {
         $parameter = get_object_vars($parameter);
         $location = $parameter['in'];
         $name = $parameter['name'];
-        $schema = isset($parameter['schema']) ? $parameter['schema'] : new \stdClass();
-        $required = isset($parameter['required']) ? $parameter['required'] : false;
+        $schema = $parameter['schema'] ?? new \stdClass();
+        $required = $parameter['required'] ?? false;
 
-        unset($parameter['in']);
-        unset($parameter['name']);
-        unset($parameter['required']);
-        unset($parameter['schema']);
+        unset($parameter['in'], $parameter['name'], $parameter['required'], $parameter['schema']);
 
         // Every remaining parameter may be json schema properties
         foreach ($parameter as $key => $value) {
@@ -264,7 +293,7 @@ class SwaggerSchemaFactory implements SchemaFactory
         }
 
         // It's not relevant to validate file type
-        if (isset($schema->format) && $schema->format === 'file') {
+        if (isset($schema->format) && 'file' === $schema->format) {
             $schema = null;
         }
 

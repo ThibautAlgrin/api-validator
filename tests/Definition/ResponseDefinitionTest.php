@@ -1,8 +1,14 @@
-<?php
-namespace ElevenLabs\Api\Definition;
+<?php declare(strict_types=1);
 
+namespace ElevenLabs\Api\Tests\Definition;
+
+use ElevenLabs\Api\Definition\Parameters;
+use ElevenLabs\Api\Definition\ResponseDefinition;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Class ResponseDefinitionTest.
+ */
 class ResponseDefinitionTest extends TestCase
 {
     /** @test */
@@ -11,6 +17,6 @@ class ResponseDefinitionTest extends TestCase
         $responseDefinition = new ResponseDefinition(200, ['application/json'], new Parameters([]));
         $serialized = serialize($responseDefinition);
 
-        assertThat(unserialize($serialized), self::equalTo($responseDefinition));
+        $this->assertEquals($responseDefinition, unserialize($serialized));
     }
 }

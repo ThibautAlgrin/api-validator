@@ -1,10 +1,15 @@
-<?php
-namespace ElevenLabs\Api;
+<?php declare(strict_types=1);
+
+namespace ElevenLabs\Api\Tests;
 
 use ElevenLabs\Api\Definition\RequestDefinition;
 use ElevenLabs\Api\Definition\RequestDefinitions;
+use ElevenLabs\Api\Schema;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Class SchemaTest.
+ */
 class SchemaTest extends TestCase
 {
     /** @test */
@@ -21,10 +26,10 @@ class SchemaTest extends TestCase
 
         $operations = $schema->getRequestDefinitions();
 
-        assertTrue(is_iterable($operations));
+        $this->assertTrue(is_iterable($operations));
 
         foreach ($operations as $operationId => $operation) {
-            assertThat($operationId, equalTo('getPet'));
+            $this->assertSame('getPet', $operationId);
         }
     }
 
@@ -43,19 +48,43 @@ class SchemaTest extends TestCase
 
         $operationId = $schema->findOperationId('GET', '/api/pets/1234');
 
-        assertThat($operationId, equalTo('getPet'));
+        $this->assertSame('getPet', $operationId);
     }
 
-    /** @test */
+    /**
+     * @test
+     *
+     * @expectedException \InvalidArgumentException
+     *
+     * @expectedExceptionMessage Unable to resolve the operationId for path /api/pets/1234
+     */
     public function itThrowAnExceptionWhenNoOperationIdCanBeResolved()
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unable to resolve the operationId for path /api/pets/1234');
-
         $requests = new RequestDefinitions();
 
         $schema = new Schema($requests, '/api');
         $schema->findOperationId('GET', '/api/pets/1234');
+    }
+
+    /**
+     * @test
+     *
+     * @expectedException \InvalidArgumentException
+     *
+     * @expectedExceptionMessage Unable to resolve the operationId for path /api
+     */
+    public function itThrowAnExceptionWhenNoOperationIdCanBeResolved2()
+    {
+        $request = $this->prophesize(RequestDefinition::class);
+        $request->getMethod()->willReturn('GET');
+        $request->getPathTemplate()->willReturn('/api/pets/{id}');
+
+        $requests = $this->prophesize(RequestDefinitions::class);
+        $requests->getIterator()->willReturn(new \ArrayIterator([$request->reveal()]));
+
+        $schema = new Schema($requests->reveal());
+
+        $schema->findOperationId('GET', '/api');
     }
 
     /** @test */
@@ -71,15 +100,18 @@ class SchemaTest extends TestCase
         $schema = new Schema($requests, '/api');
         $actual = $schema->getRequestDefinition('getPet');
 
-        assertThat($actual, equalTo($request->reveal()));
+        $this->assertEquals($request->reveal(), $actual);
     }
 
-    /** @test */
+    /**
+     * @test
+     *
+     * @expectedException \InvalidArgumentException
+     *
+     * @expectedExceptionMessage Unable to find request definition for operationId getPet
+     */
     public function itThrowAnExceptionWhenNoRequestDefinitionIsFound()
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unable to find request definition for operationId getPet');
-
         $requests = new RequestDefinitions();
 
         $schema = new Schema($requests, '/api');
@@ -94,6 +126,6 @@ class SchemaTest extends TestCase
         $schema = new Schema($requests);
         $serialized = serialize($schema);
 
-        assertThat(unserialize($serialized), equalTo($schema));
+        $this->assertEquals($schema, unserialize($serialized));
     }
 }

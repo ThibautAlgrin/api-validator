@@ -1,8 +1,14 @@
-<?php
-namespace ElevenLabs\Api\Definition;
+<?php declare(strict_types=1);
 
+namespace ElevenLabs\Api\Tests\Definition;
+
+use ElevenLabs\Api\Definition\RequestDefinition;
+use ElevenLabs\Api\Definition\RequestDefinitions;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Class RequestDefinitionsTest.
+ */
 class RequestDefinitionsTest extends TestCase
 {
     /** @test */
@@ -11,7 +17,7 @@ class RequestDefinitionsTest extends TestCase
         $requestDefinition = new RequestDefinitions([]);
         $serialized = serialize($requestDefinition);
 
-        assertThat(unserialize($serialized), self::equalTo($requestDefinition));
+        $this->assertEquals($requestDefinition, unserialize($serialized));
     }
 
     /** @test */
@@ -22,15 +28,24 @@ class RequestDefinitionsTest extends TestCase
 
         $requestDefinitions = new RequestDefinitions([$requestDefinition->reveal()]);
 
-        assertThat($requestDefinitions->getRequestDefinition('getFoo'), self::isInstanceOf(RequestDefinition::class));
+        $this->assertInstanceOf(RequestDefinition::class, $requestDefinitions->getRequestDefinition('getFoo'));
+
+        $definitions = [];
+        foreach ($requestDefinitions as $requestDefinition) {
+            $definitions[] = $requestDefinition;
+        }
+        $this->assertNotEmpty($definitions);
     }
 
-    /** @test */
+    /**
+     * @test
+     *
+     * @expectedException \InvalidArgumentException
+     *
+     * @expectedExceptionMessage Unable to find request definition for operationId getFoo
+     */
     public function itThrowAnExceptionWhenNoRequestDefinitionIsFound()
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unable to find request definition for operationId getFoo');
-
         $requestDefinitions = new RequestDefinitions([]);
         $requestDefinitions->getRequestDefinition('getFoo');
     }

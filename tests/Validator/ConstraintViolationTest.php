@@ -1,8 +1,13 @@
-<?php
-namespace ElevenLabs\Api\Validator;
+<?php declare(strict_types=1);
 
+namespace ElevenLabs\Api\Tests\Validator;
+
+use ElevenLabs\Api\Validator\ConstraintViolation;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Class ConstraintViolationTest.
+ */
 class ConstraintViolationTest extends TestCase
 {
     public function testConstraintViolationToArray()
@@ -11,11 +16,11 @@ class ConstraintViolationTest extends TestCase
             'property' => 'property_one',
             'message' => 'a violation message',
             'constraint' => 'required',
-            'location' => 'query'
+            'location' => 'query',
         ];
 
         $violation = new ConstraintViolation('property_one', 'a violation message', 'required', 'query');
 
-        assertEquals($expectedArray, $violation->toArray());
+        $this->assertSame($expectedArray, $violation->toArray());
     }
 }

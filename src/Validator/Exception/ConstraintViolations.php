@@ -4,9 +4,14 @@ namespace ElevenLabs\Api\Validator\Exception;
 
 use ElevenLabs\Api\Validator\ConstraintViolation;
 
+/**
+ * Class ConstraintViolations.
+ */
 class ConstraintViolations extends \Exception
 {
-    /** @var ConstraintViolation[] */
+    /**
+     * @var ConstraintViolation[]
+     */
     private $violations;
 
     /**
@@ -26,9 +31,13 @@ class ConstraintViolations extends \Exception
         return $this->violations;
     }
 
+    /**
+     * @return string
+     */
     public function __toString(): string
     {
         $message = "Request constraint violations:\n";
+
         foreach ($this->violations as $violation) {
             $message .= sprintf(
                 "[property]: %s\n[message]: %s\n[constraint]: %s\n[location]: %s\n\n",

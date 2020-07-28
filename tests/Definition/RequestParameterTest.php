@@ -1,20 +1,34 @@
-<?php
-namespace ElevenLabs\Api\Definition;
+<?php declare(strict_types=1);
 
+namespace ElevenLabs\Api\Tests\Definition;
+
+use ElevenLabs\Api\Definition\Parameter;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Class RequestParameterTest.
+ */
 class RequestParameterTest extends TestCase
 {
-    /** @test */
+    /**
+     * @test
+     *
+     * @expectedException \InvalidArgumentException
+     *
+     * @expectedExceptionMessage nowhere is not a supported parameter location, supported: path, header, query, body, formData
+     */
     public function itThrowAnExceptionOnUnsupportedParameterLocation()
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage(
-            'nowhere is not a supported parameter location, ' .
-            'supported: path, header, query, body, formData'
-        );
+        new Parameter('nowhere', 'foo');
+    }
 
-        $param = new Parameter('nowhere', 'foo');
+    /** @test */
+    public function itShouldUseDefaultValue()
+    {
+        $requestParameter = new Parameter('query', 'foo');
+
+        $this->assertFalse($requestParameter->hasSchema());
+        $this->assertFalse($requestParameter->isRequired());
     }
 
     /** @test */
@@ -23,7 +37,8 @@ class RequestParameterTest extends TestCase
         $requestParameter = new Parameter('query', 'foo', true, new \stdClass());
         $serialized = serialize($requestParameter);
 
-        assertThat(unserialize($serialized), self::equalTo($requestParameter));
-        self::assertTrue($requestParameter->hasSchema());
+        $this->assertEquals($requestParameter, unserialize($serialized));
+        $this->assertTrue($requestParameter->hasSchema());
+        $this->assertTrue($requestParameter->isRequired());
     }
 }

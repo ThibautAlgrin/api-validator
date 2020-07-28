@@ -67,6 +67,12 @@
             "schema": {
               "$ref": "#/definitions/Pet"
             }
+          },
+          {
+            "in": "header",
+            "name": "api_key",
+            "required": false,
+            "type": "string"
           }
         ],
         "responses": {
@@ -344,7 +350,6 @@
           {
             "name": "api_key",
             "in": "header",
-            "required": false,
             "type": "string"
           },
           {

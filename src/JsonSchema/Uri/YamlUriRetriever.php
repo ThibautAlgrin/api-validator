@@ -1,20 +1,27 @@
-<?php
+<?php declare(strict_types=1);
+
 namespace ElevenLabs\Api\JsonSchema\Uri;
 
 use JsonSchema\Uri\UriRetriever;
 use Symfony\Component\Yaml\Yaml;
 
 /**
- * Load Schema From a YAML file
+ * Class YamlUriRetriever.
  */
 class YamlUriRetriever extends UriRetriever
 {
     /**
-     * @var array|object[]
      * @see loadSchema
+     *
+     * @var array
      */
     private $schemaCache = array();
 
+    /**
+     * @param string $fetchUri
+     *
+     * @return mixed
+     */
     protected function loadSchema($fetchUri)
     {
         if (isset($this->schemaCache[$fetchUri])) {

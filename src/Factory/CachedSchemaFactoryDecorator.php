@@ -1,26 +1,44 @@
-<?php
+<?php declare(strict_types=1);
+
 namespace ElevenLabs\Api\Factory;
 
 use ElevenLabs\Api\Schema;
 use Psr\Cache\CacheItemPoolInterface;
 
 /**
- * Load/Store API Schema from Cache
+ * Class CachedSchemaFactoryDecorator.
  */
-class CachedSchemaFactoryDecorator implements SchemaFactory
+class CachedSchemaFactoryDecorator implements SchemaFactoryInterface
 {
-    /** @var SchemaFactory */
+    /**
+     * @var SchemaFactoryInterface
+     */
     private $schemaFactory;
 
-    /** @var CacheItemPoolInterface */
+    /**
+     * @var CacheItemPoolInterface
+     */
     private $cache;
 
-    public function __construct(CacheItemPoolInterface $cache, SchemaFactory $schemaFactory)
+    /**
+     * CachedSchemaFactoryDecorator constructor.
+     *
+     * @param CacheItemPoolInterface $cache
+     * @param SchemaFactoryInterface $schemaFactory
+     */
+    public function __construct(CacheItemPoolInterface $cache, SchemaFactoryInterface $schemaFactory)
     {
         $this->cache = $cache;
         $this->schemaFactory = $schemaFactory;
     }
 
+    /**
+     * @param string $schemaFile
+     *
+     * @throws \Psr\Cache\InvalidArgumentException
+     *
+     * @return Schema
+     */
     public function createSchema(string $schemaFile): Schema
     {
         $cacheKey = hash('sha1', $schemaFile);

@@ -4,22 +4,34 @@ namespace ElevenLabs\Api\Validator;
 
 /**
  * ValueObject that contains constraint violation properties
+ *
+ * Class ConstraintViolation.
  */
 class ConstraintViolation
 {
-    /** @var string */
+    /**
+     * @var string
+     */
     private $property;
 
-    /** @var string */
+    /**
+     * @var string
+     */
     private $message;
 
-    /** @var string */
+    /**
+     * @var string
+     */
     private $constraint;
 
-    /** @var string */
+    /**
+     * @var string
+     */
     private $location;
 
     /**
+     * ConstraintViolation constructor.
+     *
      * @param string $property
      * @param string $message
      * @param string $constraint
@@ -37,33 +49,48 @@ class ConstraintViolation
         $this->location = $location;
     }
 
+    /**
+     * @return string
+     */
     public function getProperty(): string
     {
         return $this->property;
     }
 
+    /**
+     * @return string
+     */
     public function getMessage(): string
     {
         return $this->message;
     }
 
+    /**
+     * @return string
+     */
     public function getConstraint(): string
     {
         return $this->constraint;
     }
 
+    /**
+     * @return string
+     */
     public function getLocation(): string
     {
         return $this->location;
     }
 
+    /**
+     * @return array
+     */
     public function toArray(): array
     {
         return [
             'property' => $this->getProperty(),
             'message' => $this->getMessage(),
             'constraint' => $this->getConstraint(),
-            'location' => $this->getLocation()
+            'location' => $this->getLocation(),
         ];
     }
 }

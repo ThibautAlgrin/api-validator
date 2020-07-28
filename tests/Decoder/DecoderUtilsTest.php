@@ -1,23 +1,24 @@
-<?php
+<?php declare(strict_types=1);
 
-namespace ElevenLabs\Api\Decoder;
+namespace ElevenLabs\Api\Tests\Decoder;
 
+use ElevenLabs\Api\Decoder\DecoderUtils;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Class DecoderUtilsTest
- *
- * @package Decoder
+ * Class DecoderUtilsTest.
  */
 class DecoderUtilsTest extends TestCase
 {
     /**
      * @dataProvider dataForExtractFormatFromContentType
-     * @param $contentType
+     *
+     * @param string $contentType
+     * @param string $format
      */
     public function testExtractFormatFromContentType($contentType, $format)
     {
-        self::assertEquals($format, DecoderUtils::extractFormatFromContentType($contentType));
+        $this->assertSame($format, DecoderUtils::extractFormatFromContentType($contentType));
     }
 
     /**
@@ -27,7 +28,8 @@ class DecoderUtilsTest extends TestCase
     {
         return [
             ['text/plain', 'plain'],
-            ['application/xhtml+xml', 'xml']
+            ['application/xhtml+xml', 'xhtml+xml'],
+            ['application/hal+json; charset=utf-8', 'hal+json'],
         ];
     }
 }

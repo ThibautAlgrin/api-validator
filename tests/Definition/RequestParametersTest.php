@@ -1,8 +1,14 @@
-<?php
-namespace ElevenLabs\Api\Definition;
+<?php declare(strict_types=1);
 
+namespace ElevenLabs\Api\Tests\Definition;
+
+use ElevenLabs\Api\Definition\Parameter;
+use ElevenLabs\Api\Definition\Parameters;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Class RequestParametersTest.
+ */
 class RequestParametersTest extends TestCase
 {
     /** @test */
@@ -14,8 +20,13 @@ class RequestParametersTest extends TestCase
 
         $requestParameters = new Parameters([$requestParameter->reveal()]);
 
-        assertThat($requestParameters, isInstanceOf(\Traversable::class));
+        $this->assertInstanceOf(\Traversable::class, $requestParameters);
+        $values = [];
+        foreach ($requestParameters->getIterator() as $value) {
+            $values[] = $value;
+        }
         assertThat($requestParameters, containsOnlyInstancesOf(Parameter::class));
+        $this->assertNotEmpty($values);
     }
 
     /** @test */
@@ -24,7 +35,7 @@ class RequestParametersTest extends TestCase
         $requestParameters = new Parameters([]);
         $serialized = serialize($requestParameters);
 
-        assertThat(unserialize($serialized), self::equalTo($requestParameters));
+        $this->assertEquals($requestParameters, unserialize($serialized));
     }
 
     /** @test */
@@ -36,6 +47,7 @@ class RequestParametersTest extends TestCase
 
         $requestParameters = new Parameters([$requestParameter->reveal()]);
 
-        assertThat($requestParameters->getByName('foo'), equalTo($requestParameter->reveal()));
+        $this->assertSame($requestParameter->reveal(), $requestParameters->getByName('foo'));
+        $this->assertNull($requestParameters->getByName('bar'));
     }
 }

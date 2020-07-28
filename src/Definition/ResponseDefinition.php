@@ -2,20 +2,32 @@
 
 namespace ElevenLabs\Api\Definition;
 
+/**
+ * Class ResponseDefinition.
+ */
 class ResponseDefinition implements \Serializable, MessageDefinition
 {
-    /** @var int|string */
+    /**
+     * @var int|string
+     */
     private $statusCode;
 
-    /** @var string[] */
+    /**
+     * @var string[]
+     */
     private $contentTypes;
 
-    /** @var Parameters */
+    /**
+     * @var Parameters
+     */
     private $parameters;
 
     /**
+     * ResponseDefinition constructor.
+     *
      * @param int|string $statusCode
-     * @param string[] $allowedContentTypes
+     * @param string[]   $allowedContentTypes
+     * @param Parameters $parameters
      */
     public function __construct($statusCode, array $allowedContentTypes, Parameters $parameters)
     {
@@ -32,22 +44,42 @@ class ResponseDefinition implements \Serializable, MessageDefinition
         return $this->statusCode;
     }
 
+    /**
+     * @return Parameters
+     */
+    public function getParameters(): Parameters
+    {
+        return $this->parameters;
+    }
+
+    /**
+     * @return bool
+     */
     public function hasBodySchema(): bool
     {
         return $this->parameters->hasBodySchema();
     }
 
-    public function getBodySchema(): ?object
+    /**
+     * @return \stdClass|null
+     */
+    public function getBodySchema(): ?\stdClass
     {
         return $this->parameters->getBodySchema();
     }
 
+    /**
+     * @return bool
+     */
     public function hasHeadersSchema(): bool
     {
         return $this->parameters->hasHeadersSchema();
     }
 
-    public function getHeadersSchema(): ?object
+    /**
+     * @return \stdClass|null
+     */
+    public function getHeadersSchema(): ?\stdClass
     {
         return $this->parameters->getHeadersSchema();
     }
@@ -63,16 +95,22 @@ class ResponseDefinition implements \Serializable, MessageDefinition
     }
 
     // Serializable
-    public function serialize()
+    /**
+     * @return string
+     */
+    public function serialize(): string
     {
         return serialize([
             'statusCode' => $this->statusCode,
             'contentTypes' => $this->contentTypes,
-            'parameters' => $this->parameters
+            'parameters' => $this->parameters,
         ]);
     }
 
     // Serializable
+    /**
+     * @param string $serialized
+     */
     public function unserialize($serialized)
     {
         $data = unserialize($serialized);

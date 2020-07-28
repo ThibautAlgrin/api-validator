@@ -2,38 +2,51 @@
 
 namespace ElevenLabs\Api\Definition;
 
+/**
+ * Class RequestDefinition.
+ */
 class RequestDefinition implements \Serializable, MessageDefinition
 {
-    /** @var string */
+    /**
+     * @var string
+     */
     private $method;
 
-    /** @var string */
+    /**
+     * @var string
+     */
     private $operationId;
 
-    /** @var string */
+    /**
+     * @var string
+     */
     private $pathTemplate;
 
-    /** @var Parameters */
+    /**
+     * @var Parameters
+     */
     private $parameters;
 
-    /** @var string[] */
+    /**
+     * @var string[]
+     */
     private $contentTypes;
 
-    /** @var ResponseDefinition[] */
+    /**
+     * @var ResponseDefinition[]
+     */
     private $responses;
 
     /**
-     * @param string[] $contentTypes
+     * @param string               $method
+     * @param string               $operationId
+     * @param string               $pathTemplate
+     * @param Parameters           $parameters
+     * @param string[]             $contentTypes
      * @param ResponseDefinition[] $responses
      */
-    public function __construct(
-        string $method,
-        string $operationId,
-        string $pathTemplate,
-        Parameters $parameters,
-        array $contentTypes,
-        array $responses
-    ) {
+    public function __construct(string $method, string $operationId, string $pathTemplate, Parameters $parameters, array $contentTypes, array $responses)
+    {
         $this->method = $method;
         $this->operationId = $operationId;
         $this->pathTemplate = $pathTemplate;
@@ -44,32 +57,52 @@ class RequestDefinition implements \Serializable, MessageDefinition
         }
     }
 
+    /**
+     * @return string
+     */
     public function getMethod(): string
     {
         return $this->method;
     }
 
+    /**
+     * @return string
+     */
     public function getOperationId(): string
     {
         return $this->operationId;
     }
 
+    /**
+     * @return string
+     */
     public function getPathTemplate(): string
     {
         return $this->pathTemplate;
     }
 
+    /**
+     * @return Parameters
+     */
     public function getRequestParameters(): Parameters
     {
         return $this->parameters;
     }
 
+    /**
+     * @return array
+     */
     public function getContentTypes(): array
     {
         return $this->contentTypes;
     }
 
-    public function getResponseDefinition(int $statusCode): ResponseDefinition
+    /**
+     * @param int|string $statusCode
+     *
+     * @return ResponseDefinition
+     */
+    public function getResponseDefinition($statusCode): ResponseDefinition
     {
         if (isset($this->responses[$statusCode])) {
             return $this->responses[$statusCode];
@@ -89,48 +122,75 @@ class RequestDefinition implements \Serializable, MessageDefinition
         );
     }
 
+    /**
+     * @return bool
+     */
     public function hasBodySchema(): bool
     {
         return $this->parameters->hasBodySchema();
     }
 
-    public function getBodySchema(): ?object
+    /**
+     * @return \stdClass|null
+     */
+    public function getBodySchema(): ?\stdClass
     {
         return $this->parameters->getBodySchema();
     }
 
+    /**
+     * @return bool
+     */
     public function hasHeadersSchema(): bool
     {
         return $this->parameters->hasHeadersSchema();
     }
 
-    public function getHeadersSchema(): ?object
+    /**
+     * @return \stdClass|null
+     */
+    public function getHeadersSchema(): ?\stdClass
     {
         return $this->parameters->getHeadersSchema();
     }
 
+    /**
+     * @return bool
+     */
     public function hasPathSchema(): bool
     {
         return $this->parameters->hasPathSchema();
     }
 
-    public function getPathSchema(): ?object
+    /**
+     * @return \stdClass|null
+     */
+    public function getPathSchema(): ?\stdClass
     {
         return $this->parameters->getPathSchema();
     }
 
+    /**
+     * @return bool
+     */
     public function hasQueryParametersSchema(): bool
     {
         return $this->parameters->hasQueryParametersSchema();
     }
 
-    public function getQueryParametersSchema(): ?object
+    /**
+     * @return \stdClass|null
+     */
+    public function getQueryParametersSchema(): ?\stdClass
     {
         return $this->parameters->getQueryParametersSchema();
     }
 
     // Serializable
-    public function serialize()
+    /**
+     * @return string
+     */
+    public function serialize(): string
     {
         return serialize([
             'method' => $this->method,
@@ -138,11 +198,14 @@ class RequestDefinition implements \Serializable, MessageDefinition
             'pathTemplate' => $this->pathTemplate,
             'parameters' => $this->parameters,
             'contentTypes' => $this->contentTypes,
-            'responses' => $this->responses
+            'responses' => $this->responses,
         ]);
     }
 
     // Serializable
+    /**
+     * @param string $serialized
+     */
     public function unserialize($serialized)
     {
         $data = unserialize($serialized);
@@ -154,6 +217,9 @@ class RequestDefinition implements \Serializable, MessageDefinition
         $this->responses = $data['responses'];
     }
 
+    /**
+     * @param ResponseDefinition $response
+     */
     private function addResponseDefinition(ResponseDefinition $response)
     {
         $this->responses[$response->getStatusCode()] = $response;

@@ -1,13 +1,19 @@
-<?php
-namespace ElevenLabs\Api\Factory;
+<?php declare(strict_types=1);
+
+namespace ElevenLabs\Api\Tests\Factory;
 
 use ElevenLabs\Api\Definition\RequestDefinition;
 use ElevenLabs\Api\Definition\Parameter;
 use ElevenLabs\Api\Definition\Parameters;
 use ElevenLabs\Api\Definition\ResponseDefinition;
+use ElevenLabs\Api\Factory\SwaggerSchemaFactory;
 use ElevenLabs\Api\Schema;
+use ElevenLabs\Api\Tests\Definition\RequestParametersTest;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Class SwaggerSchemaFactoryTest.
+ */
 class SwaggerSchemaFactoryTest extends TestCase
 {
     /** @test */
@@ -15,7 +21,29 @@ class SwaggerSchemaFactoryTest extends TestCase
     {
         $schema = $this->getPetStoreSchemaJson();
 
-        assertThat($schema, isInstanceOf(Schema::class));
+        $this->assertInstanceOf(Schema::class, $schema);
+        $this->assertSame('/v2', $schema->getBasePath());
+        $this->assertSame('petstore.swagger.io', $schema->getHost());
+        $this->assertSame(['https', 'http'], $schema->getSchemes());
+
+        $requestDefinition = $schema->getRequestDefinitions()->getRequestDefinition('addPet');
+
+        $this->assertSame('POST', $requestDefinition->getMethod());
+        $this->assertSame(['application/json', 'application/xml'], $requestDefinition->getContentTypes());
+        $this->assertTrue($requestDefinition->hasHeadersSchema());
+        $this->assertSame(
+            '{"type":"object","required":[],"properties":{"api_key":{"type":"string"}}}',
+            json_encode($requestDefinition->getHeadersSchema())
+        );
+        $this->assertFalse($requestDefinition->hasPathSchema());
+        $this->assertTrue($requestDefinition->hasBodySchema());
+        $this->assertFalse($requestDefinition->hasQueryParametersSchema());
+        $this->assertSame('addPet', $requestDefinition->getOperationId());
+        $this->assertSame('/v2/pet', $requestDefinition->getPathTemplate());
+        $this->assertInstanceOf(Parameters::class, $requestDefinition->getRequestParameters());
+        $this->assertSame(['application/json', 'application/xml'], $requestDefinition->getContentTypes());
+        $bodySchema = $requestDefinition->getBodySchema();
+        $this->assertFalse(isset($bodySchema->{'$ref'}));
     }
 
     /** @test */
@@ -23,16 +51,31 @@ class SwaggerSchemaFactoryTest extends TestCase
     {
         $schema = $this->getPetStoreSchemaYaml();
 
-        assertThat($schema, isInstanceOf(Schema::class));
+        $this->assertInstanceOf(Schema::class, $schema);
+        $this->assertSame('/v2', $schema->getBasePath());
+        $this->assertSame('petstore.swagger.io', $schema->getHost());
+        $this->assertSame(['https', 'http'], $schema->getSchemes());
+
+        $requestDefinition = $schema->getRequestDefinitions()->getRequestDefinition('addPet');
+        $this->assertSame('POST', $requestDefinition->getMethod());
+        $this->assertSame('addPet', $requestDefinition->getOperationId());
+        $this->assertSame('/v2/pet', $requestDefinition->getPathTemplate());
+        $this->assertInstanceOf(Parameters::class, $requestDefinition->getRequestParameters());
+        $this->assertSame(['application/json', 'application/xml'], $requestDefinition->getContentTypes());
+        $bodySchema = $requestDefinition->getBodySchema();
+        $this->assertFalse(isset($bodySchema->{'$ref'}));
     }
 
-    /** @test */
+    /**
+     * @test
+     *
+     * @expectedException \InvalidArgumentException
+     *
+     * @expectedExceptionMessageRegExp /does not provide a supported extension/
+     */
     public function itThrowAnExceptionWhenTheSchemaFileIsNotSupported()
     {
         $unsupportedFile = 'file://'.dirname(__DIR__).'/fixtures/petstore.txt';
-
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/does not provide a supported extension/');
 
         (new SwaggerSchemaFactory())->createSchema($unsupportedFile);
     }
@@ -42,26 +85,32 @@ class SwaggerSchemaFactoryTest extends TestCase
     {
         $schema = $this->getPetStoreSchemaJson();
 
-        assertThat($schema->getHost(), equalTo('petstore.swagger.io'));
-        assertThat($schema->getBasePath(), equalTo('/v2'));
-        assertThat($schema->getSchemes(), equalTo(['https', 'http']));
+        $this->assertSame('petstore.swagger.io', $schema->getHost());
+        $this->assertSame('/v2', $schema->getBasePath());
+        $this->assertSame(['https', 'http'], $schema->getSchemes());
     }
 
-    /** @test */
+    /**
+     * @test
+     *
+     * @expectedException \LogicException
+     *
+     * @expectedExceptionMessage You need to provide an operationId for GET /something
+     */
     public function itThrowAnExceptionWhenAnOperationDoesNotProvideAnId()
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('You need to provide an operationId for GET /something');
-
         $this->getSchemaFromFile('operation-without-an-id.json');
     }
 
-    /** @test */
+    /**
+     * @test
+     *
+     * @expectedException \LogicException
+     *
+     * @expectedExceptionMessage You need to specify at least one response for GET /something
+     */
     public function itThrowAnExceptionWhenAnOperationDoesNotProvideResponses()
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('You need to specify at least one response for GET /something');
-
         $this->getSchemaFromFile('operation-without-responses.json');
     }
 
@@ -71,9 +120,9 @@ class SwaggerSchemaFactoryTest extends TestCase
         $schema = $this->getSchemaFromFile('operation-without-parameters.json');
         $definition = $schema->getRequestDefinition('getSomething');
 
-        assertThat($definition->hasHeadersSchema(), isFalse());
-        assertThat($definition->hasBodySchema(), isFalse());
-        assertThat($definition->hasQueryParametersSchema(), isFalse());
+        $this->assertFalse($definition->hasHeadersSchema());
+        $this->assertFalse($definition->hasBodySchema());
+        $this->assertFalse($definition->hasQueryParametersSchema());
     }
 
     /** @test */
@@ -83,14 +132,27 @@ class SwaggerSchemaFactoryTest extends TestCase
 
         $requestDefinition = $schema->getRequestDefinition('findPetsByStatus');
 
-        assertThat($requestDefinition, isInstanceOf(RequestDefinition::class));
-        assertThat($requestDefinition->getMethod(), equalTo('GET'));
-        assertThat($requestDefinition->getOperationId(), equalTo('findPetsByStatus'));
-        assertThat($requestDefinition->getPathTemplate(), equalTo('/v2/pet/findByStatus'));
-        assertThat($requestDefinition->getContentTypes(), equalTo([]));
-        assertThat($requestDefinition->getRequestParameters(), isInstanceOf(Parameters::class));
-        assertThat($requestDefinition->getResponseDefinition(200), isInstanceOf(ResponseDefinition::class));
-        assertThat($requestDefinition->getResponseDefinition(400), isInstanceOf(ResponseDefinition::class));
+        $this->assertInstanceOf(RequestDefinition::class, $requestDefinition);
+        $this->assertSame('GET', $requestDefinition->getMethod());
+        $this->assertSame('findPetsByStatus', $requestDefinition->getOperationId());
+        $this->assertSame('/v2/pet/findByStatus', $requestDefinition->getPathTemplate());
+        $this->assertSame([], $requestDefinition->getContentTypes());
+        $this->assertInstanceOf(Parameters::class, $requestDefinition->getRequestParameters());
+
+        $responseDefinition = $requestDefinition->getResponseDefinition(200);
+        $this->assertInstanceOf(ResponseDefinition::class, $responseDefinition);
+        $this->assertSame(200, $responseDefinition->getStatusCode());
+        $this->assertSame(['application/xml', 'application/json'], $responseDefinition->getContentTypes());
+        $this->assertInstanceOf(Parameter::class, $responseDefinition->getParameters()->getBody());
+
+        $body = $responseDefinition->getParameters()->getBody();
+        $this->assertSame('body', $body->getLocation());
+        $this->assertSame('body', $body->getName());
+        $this->assertTrue($body->isRequired());
+        $this->assertInstanceOf(\stdClass::class, $body->getSchema());
+        $this->assertSame('array', $body->getSchema()->type);
+
+        $this->assertInstanceOf(ResponseDefinition::class, $requestDefinition->getResponseDefinition(400));
     }
 
     /** @test */
@@ -100,10 +162,10 @@ class SwaggerSchemaFactoryTest extends TestCase
 
         $requestParameters = $schema->getRequestDefinition('addPet')->getRequestParameters();
 
-        assertThat($requestParameters, isInstanceOf(Parameters::class));
-        assertThat($requestParameters->getBody(), isInstanceOf(Parameter::class));
-        assertThat($requestParameters->hasBodySchema(), isTrue());
-        assertThat($requestParameters->getBodySchema(), isType('object'));
+        $this->assertInstanceOf(Parameters::class, $requestParameters);
+        $this->assertInstanceOf(Parameter::class, $requestParameters->getBody());
+        $this->assertTrue($requestParameters->hasBodySchema());
+        $this->assertTrue(is_object($requestParameters->getBodySchema()));
     }
 
     /** @test */
@@ -124,7 +186,10 @@ class SwaggerSchemaFactoryTest extends TestCase
         $requestParameters = $schema->getRequestDefinition('findPetsByStatus')->getRequestParameters();
 
         assertThat($requestParameters->getQuery(), containsOnlyInstancesOf(Parameter::class));
-        assertThat($requestParameters->getQueryParametersSchema(), isType('object'));
+        $this->assertTrue(is_object($requestParameters->getQueryParametersSchema()));
+        $queryParametersSchema = $requestParameters->getQueryParametersSchema();
+        $this->assertTrue(isset($queryParametersSchema->properties->status));
+        $this->assertTrue(is_object($queryParametersSchema->properties->status));
     }
 
     /** @test */
@@ -135,8 +200,18 @@ class SwaggerSchemaFactoryTest extends TestCase
         $requestParameters = $schema->getRequestDefinition('deletePet')->getRequestParameters();
 
         assertThat($requestParameters->getHeaders(), containsOnlyInstancesOf(Parameter::class));
-        assertThat($requestParameters->hasHeadersSchema(), isTrue());
-        assertThat($requestParameters->getHeadersSchema(), isType('object'));
+        $this->assertTrue($requestParameters->hasHeadersSchema());
+        $this->assertTrue(is_object($requestParameters->getHeadersSchema()));
+
+        $headers = $requestParameters->getHeaders();
+        $this->assertCount(1, $headers);
+        $this->assertArrayHasKey('api_key', $headers);
+
+        $apiKey = $headers['api_key'];
+        $this->assertSame('header', $apiKey->getLocation());
+        $this->assertSame('api_key', $apiKey->getName());
+        $this->assertFalse($apiKey->isRequired());
+        $this->assertNotNull($apiKey->getSchema());
     }
 
     /** @test */
@@ -146,10 +221,34 @@ class SwaggerSchemaFactoryTest extends TestCase
 
         $responseDefinition = $schema->getRequestDefinition('getPetById')->getResponseDefinition(200);
 
-        assertThat($responseDefinition, isInstanceOf(ResponseDefinition::class));
-        assertThat($responseDefinition->getBodySchema(), isType('object'));
-        assertThat($responseDefinition->getStatusCode(), equalTo(200));
-        assertThat($responseDefinition->getContentTypes(), contains('application/json'));
+        $this->assertInstanceOf(ResponseDefinition::class, $responseDefinition);
+        $this->assertFalse($responseDefinition->hasHeadersSchema());
+        $this->assertTrue($responseDefinition->hasBodySchema());
+        $this->assertTrue(is_object($responseDefinition->getBodySchema()));
+        $this->assertSame(200, $responseDefinition->getStatusCode());
+        $this->assertContains('application/json', $responseDefinition->getContentTypes());
+    }
+
+    /**
+     * @test
+     */
+    public function itCanCreateAResponseDefinitionWithHeaders()
+    {
+        $schema = $this->getPetStoreSchemaYaml();
+
+        $responseDefinition = $schema->getRequestDefinition('loginUser')->getResponseDefinition(200);
+
+        $this->assertInstanceOf(ResponseDefinition::class, $responseDefinition);
+        $this->assertTrue($responseDefinition->hasHeadersSchema());
+        $this->assertTrue($responseDefinition->hasBodySchema());
+        $this->assertTrue(is_object($responseDefinition->getBodySchema()));
+        $this->assertSame(200, $responseDefinition->getStatusCode());
+        $this->assertContains('application/json', $responseDefinition->getContentTypes());
+        $this->assertTrue($responseDefinition->hasHeadersSchema());
+
+        $headerSchema = '{"type":"object","required":["X-Rate-Limit","X-Expires-After"],"properties":{"X-Rate-Limit":{"type":"integer","format":"int32","description":"calls per hour allowed by the user"},"X-Expires-After":{"type":"string","format":"date-time","description":"date in UTC when token expires"}}}';
+
+        $this->assertSame($headerSchema, json_encode($responseDefinition->getHeadersSchema()));
     }
 
     public function itUseTheSchemaDefaultConsumesPropertyWhenNotProvidedByAnOperation()
@@ -189,24 +288,24 @@ class SwaggerSchemaFactoryTest extends TestCase
         return [
             'body' => [
                 'operationId' => 'postBodyWithoutAContentType',
-                'contentType' => 'application/json'
+                'contentType' => 'application/json',
             ],
             'formData' => [
                 'operationId' => 'postFromDataWithoutAContentType',
-                'contentType' => 'application/x-www-form-urlencoded'
+                'contentType' => 'application/x-www-form-urlencoded',
             ],
         ];
     }
 
-    /** @test */
+    /**
+     * @test
+     *
+     * @expectedException \LogicException
+     *
+     * @expectedExceptionMessage Parameters cannot have body and formData locations at the same time in /post/with-conflicting-locations
+     */
     public function itFailWhenTryingToGuessTheContentTypeFromARequestWithMultipleBodyLocations()
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage(
-            'Parameters cannot have body and formData locations ' .
-            'at the same time in /post/with-conflicting-locations'
-        );
-
         $schemaFile = 'file://'.dirname(__DIR__).'/fixtures/request-with-conflicting-locations.json';
         (new SwaggerSchemaFactory())->createSchema($schemaFile);
     }
