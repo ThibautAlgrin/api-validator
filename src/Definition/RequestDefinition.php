@@ -33,6 +33,11 @@ class RequestDefinition implements \Serializable, MessageDefinition
     private $contentTypes;
 
     /**
+     * @var string[]
+     */
+    private $accepts;
+
+    /**
      * @var ResponseDefinition[]
      */
     private $responses;
@@ -45,13 +50,14 @@ class RequestDefinition implements \Serializable, MessageDefinition
      * @param string[]             $contentTypes
      * @param ResponseDefinition[] $responses
      */
-    public function __construct(string $method, string $operationId, string $pathTemplate, Parameters $parameters, array $contentTypes, array $responses)
+    public function __construct(string $method, string $operationId, string $pathTemplate, Parameters $parameters, array $contentTypes, array $accepts, array $responses)
     {
         $this->method = $method;
         $this->operationId = $operationId;
         $this->pathTemplate = $pathTemplate;
         $this->parameters = $parameters;
         $this->contentTypes = $contentTypes;
+        $this->accepts = $accepts;
         foreach ($responses as $response) {
             $this->addResponseDefinition($response);
         }
@@ -95,6 +101,11 @@ class RequestDefinition implements \Serializable, MessageDefinition
     public function getContentTypes(): array
     {
         return $this->contentTypes;
+    }
+
+    public function getAccepts(): array
+    {
+        return $this->accepts;
     }
 
     /**

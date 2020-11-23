@@ -21,6 +21,7 @@ class RequestDefinitionTest extends TestCase
             '/foo/{id}',
             new Parameters([]),
             ['application/json'],
+            [],
             []
         );
 
@@ -47,6 +48,7 @@ class RequestDefinitionTest extends TestCase
             '/foo/{id}',
             new Parameters([]),
             ['application/json'],
+            [],
             [$responseDefinition->reveal()]
         );
         $this->assertFalse($requestDefinition->hasBodySchema());
@@ -74,6 +76,7 @@ class RequestDefinitionTest extends TestCase
             '/foo/{id}',
             new Parameters([]),
             ['application/json'],
+            [],
             $responseDefinitions
         );
         $this->assertFalse($requestDefinition->hasBodySchema());
@@ -99,6 +102,7 @@ class RequestDefinitionTest extends TestCase
             '/foo/{id}',
             new Parameters([]),
             ['application/json'],
+            [],
             []
         );
         $this->assertFalse($requestDefinition->hasBodySchema());

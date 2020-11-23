@@ -127,6 +127,10 @@ class SwaggerSchemaFactory implements SchemaFactoryInterface
                 if (isset($definition->consumes)) {
                     $contentTypes = $definition->consumes;
                 }
+                $accepts = $defaultProducedContentTypes;
+                if (isset($definition->produces)) {
+                    $accepts = $definition->produces;
+                }
 
                 if (!isset($definition->operationId)) {
                     throw new \LogicException(
@@ -181,6 +185,7 @@ class SwaggerSchemaFactory implements SchemaFactoryInterface
                     '/' === $basePath ? $pathTemplate : $basePath.$pathTemplate,
                     new Parameters($requestParameters),
                     $contentTypes,
+                    $accepts,
                     $responseDefinitions
                 );
             }
